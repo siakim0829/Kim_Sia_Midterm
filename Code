@@ -4,7 +4,8 @@ let numStars = 100;
 function setup() {
   createCanvas(800, 600);
 
-  // create stars
+
+// loop for creating stars runs 100 and created new stars 
   for (let i = 0; i < numStars; i++) {
     stars.push(new Star(random(width), random(height)));
   }
@@ -19,6 +20,7 @@ function draw() {
   }
 }
 
+//class for creating the objects star
 class Star {
 
   constructor(x, y) {
@@ -34,6 +36,7 @@ class Star {
     this.alpha = random(150, 255);
   }
 
+//shimmer effect
   update() {
     let shimmer = sin(frameCount * this.speed + this.offset);
     this.size = this.baseSize + shimmer * 0.8;
