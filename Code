@@ -1,10 +1,12 @@
 let stars = [];
-let numStars = 100;
+let numStars = 120;
+
+let constellationTimer = 0;
+let constellationInterval = 120;
 
 function setup() {
   createCanvas(800, 600);
-
-
+  
 // loop for creating stars runs 100 and created new stars 
   for (let i = 0; i < numStars; i++) {
     stars.push(new Star(random(width), random(height)));
@@ -12,39 +14,157 @@ function setup() {
 }
 
 function draw() {
-  background(10, 10, 30);
-  
-  for (let i = 0; i < stars.length; i++) {
-    stars[i].update();
-    stars[i].display();
+
+//sky gradient
+  drawSkyGradient();
+
+//constellation timing
+  if (frameCount % constellationInterval == 0) {
+    constellationTimer++;
   }
+
+//constellations
+  drawConstellations();
+
+//stars movement
+  for (let i = 0; i < stars.length; i++) {
+
+    stars[i].update();
+    stars[i].mouseInfluence(mouseX, mouseY);
+    stars[i].display();
+
+  }
+
+}
+
+
+// gradient
+function drawSkyGradient() {
+
+  let t = frameCount * 0.001;
+
+  let topR = map(sin(t), -1, 1, 80, 10);
+  let topG = map(sin(t), -1, 1, 50, 10);
+  let topB = map(sin(t), -1, 1, 120, 40);
+
+  let bottomR = map(sin(t), -1, 1, 255, 5);
+  let bottomG = map(sin(t), -1, 1, 120, 5);
+  let bottomB = map(sin(t), -1, 1, 80, 30);
+
+  for (let y = 0; y < height; y++) {
+
+    let inter = map(y, 0, height, 0, 1);
+
+    let r = lerp(topR, bottomR, inter);
+    let g = lerp(topG, bottomG, inter);
+    let b = lerp(topB, bottomB, inter);
+
+    stroke(r, g, b);
+    line(0, y, width, y);
+
+  }
+
+}
+
+
+function drawConstellations() {
+
+  strokeWeight(0.5);
+
+  for (let i = 0; i < stars.length; i++) {
+
+    for (let j = i + 1; j < stars.length; j++) {
+
+      let d = dist(stars[i].x, stars[i].y, stars[j].x, stars[j].y);
+
+      if (d < 80) {
+
+        let chance = sin(constellationTimer * 0.5 + i * 0.1);
+
+        if (chance > 0.95) {
+
+          stroke(255, 40);
+          line(stars[i].x, stars[i].y, stars[j].x, stars[j].y);
+
+        }
+
+      }
+
+    }
+
+  }
+
 }
 
 //class for creating the objects star
 class Star {
 
   constructor(x, y) {
+
     this.x = x;
     this.y = y;
+
+    this.dx = random(-0.1, 0.1);
+    this.dy = random(-0.1, 0.1);
 
     this.baseSize = random(1, 3);
     this.size = this.baseSize;
 
     this.offset = random(1000);
-    this.speed = random(0.02, 0.05);
+    this.speed = random(0.03, 0.07);
 
     this.alpha = random(150, 255);
   }
 
 //shimmer effect
   update() {
+
     let shimmer = sin(frameCount * this.speed + this.offset);
-    this.size = this.baseSize + shimmer * 0.8;
+
+    this.size = this.baseSize + shimmer * 1.5;
+
     this.alpha = map(shimmer, -1, 1, 120, 255);
+
+    // drifting movement
+    this.x += this.dx;
+    this.y += this.dy;
+
+    // wrap stars around edges
+    if (this.x > width) this.x = 0;
+    if (this.x < 0) this.x = width;
+
+    if (this.y > height) this.y = 0;
+    if (this.y < 0) this.y = height;
   }
 
+//mouse
+  mouseInfluence(mx, my) {
+
+    let d = dist(this.x, this.y, mx, my);
+
+    if (d < 100) {
+
+      let angle = atan2(this.y - my, this.x - mx);
+
+      this.x += cos(angle) * 0.5;
+      this.y += sin(angle) * 0.5;
+
+      // stars glow brighter when mouse is near
+      this.alpha = 255;
+    }
+
+  }
+
+
   display() {
+
     noStroke();
+
+    // glow layer
+    fill(255, 255, 255, this.alpha * 0.2);
+    ellipse(this.x, this.y, this.size * 4);
+
+    // star center
     fill(255, 255, 255, this.alpha);
     ellipse(this.x, this.y, this.size);
 
